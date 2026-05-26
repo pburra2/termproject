@@ -9,6 +9,10 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
 
 //define structs
 typedef struct list {
@@ -35,7 +39,10 @@ typedef struct node {
  * GOAL: return a pointer to a new list */
 LIST *createList(void) {
 
-
+    LIST *lp = malloc(sizeof(LIST));
+    NODE *head = malloc(sizeof(NODE*)); 
+    NODE *tail = malloc(sizeof(NODE*));
+     
 
 }
 
