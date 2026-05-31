@@ -37,12 +37,17 @@ typedef struct node {
  * - head IS dummy node..?
  *
  * GOAL: return a pointer to a new list */
-LIST *createList(void) {
+LIST *createList(int (*compare)) {
 
     LIST *lp = malloc(sizeof(LIST));
     NODE *head = malloc(sizeof(NODE*)); 
     NODE *tail = malloc(sizeof(NODE*));
-     
+    
+    lp->head = head;
+    lp->compare = compare;
+    lp->count = 0;
+
+    return lp;
 
 }
 
@@ -60,9 +65,8 @@ void destroyList(LIST *lp) {
 
 //return the number of items in the list pointed to by lp
 int numItems(LIST *lp) {
-
-
-
+    assert (lp != NULL);
+    return lp->count;
 }
 
 //add item as the first item in the list pointed to by lp
