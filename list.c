@@ -7,6 +7,9 @@
  *
  * Description:
  *
+ *
+ * when addingfirst/removefirst, do you have to update what the "first"
+ * el array loc is?
  */
 
 #include <stdio.h>
@@ -152,8 +155,33 @@ void addLast(LIST *lp, void *item) {
 
 }
 
-//remove and return the first item in the list pointed to by lp ; the list must not be empty
+//remove and return the first item in the list pointed to by lp
+//the list must not be empty
 void *removeFirst(LIST *lp) {
+
+    assert (lp != NULL);
+
+    //so don't have to keep using pointers
+    NODE *curr;
+    int loc;
+    
+    if (lp->tcunt == 0) { //no nodes    
+        return NULL;
+    }
+    else {
+        curr = lp->dummy->next;
+        if (curr->lcunt == 0) { //if array in first node emptry, but
+                                //what if single node with no elements in array?
+                                //does that happen?
+            void *temp = curr;
+            curr = curr->next;//means dummy->next is curr->next
+            curr->prev = lp->dummy;
+            free(temp);
+        }
+        loc = slotf;
+    }
+        
+    curr->data[loc] = NULL;
 
 
 
