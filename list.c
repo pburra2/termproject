@@ -44,7 +44,7 @@ typedef struct node {
  * - head IS dummy node..?
  *
  * GOAL: return a pointer to a new list */
-LIST *createList(int (*compare)) {
+LIST *createList(int (*compare)()) {
 
     LIST *lp = malloc(sizeof(LIST));
     NODE *dummy = malloc(sizeof(NODE)); 
@@ -77,7 +77,6 @@ static NODE* mknode(LIST *lp, NODE* prev) {
         lp->dummy->next = new;
         lp->dummy->prev = new;
         lp->tcunt++;
-        return new;
     }
     else {
         new->data = malloc(sizeof(prev->data) * 2);
@@ -85,6 +84,8 @@ static NODE* mknode(LIST *lp, NODE* prev) {
         new->prev = prev;
         prev->next = new;
     }
+
+    return new;
 
 }
 
@@ -188,8 +189,8 @@ void *removeFirst(LIST *lp) {
         
     value = curr->data[loc];
     curr->data[loc] = NULL;
-    curr->lcunt;
-    lp->tcunt;
+    curr->lcunt--;
+    lp->tcunt--;
 
     return value;
 
@@ -229,8 +230,8 @@ void *removeLast(LIST *lp) {
 
 }
 
-//return the item at position index in the list pointed to by lp ; the index must be within range
-//start at end bc most items
+//return the item at position index in the list pointed to by lp
+//the index must be within range
 void *getItem(LIST *lp, int index) {
 
    if (lp->tcunt == 0) {//no nodes
@@ -250,6 +251,28 @@ void *getItem(LIST *lp, int index) {
        }
 
        return ncurr->data[slotf + (index - icurr)];
+       
+   }
+
+}
+
+//change the item at position index in the list pointed to by lp
+//the index must be within range
+void setItem(LIST *lp, int index, void *item) {
+
+   if (lp->tcunt == 0) //no nodes
+       printf("No items in list");
+   else if (index >= lp->tcunt || index < 0) 
+       printf("Index value is invalid");
+   else {
+       NODE *ncurr = lp->dummy->next;
+       int icurr = 0; 
+       while (index > (icurr + ncurr->lcunt)) {
+            icurr += ncurr->lcunt;
+            ncurr = ncurr->next;
+       }
+
+       ncurr->data[slotf + (index - icurr)] = item;
        
    }
 
