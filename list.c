@@ -174,7 +174,7 @@ void *removeFirst(LIST *lp) {
                                 //what if single node with no elements in array?
                                 //does that happen?
             void *temp = curr;
-            curr = curr->next;//means dummy->next is curr->next
+            curr = curr->next;
             curr->prev = lp->dummy;
             free(temp);
         }
@@ -183,20 +183,40 @@ void *removeFirst(LIST *lp) {
         
     curr->data[loc] = NULL;
 
-
-
 }
 
 //remove and return the last item in the list pointed to by lp ; the list must not be empty
 void *removeLast(LIST *lp) {
 
+    assert (lp != NULL);
 
+    //so don't have to keep using pointers
+    NODE *curr;
+    int loc;
+    
+    if (lp->tcunt == 0) { //no nodes    
+        return NULL;
+    }
+    else {
+        curr = lp->dummy->prev;
+        if (curr->lcunt == 0) { //if array in last node emptry, but
+                                //what if single node with no elements in array?
+                                //does that happen?
+            void *temp = curr;
+            curr = curr->prev;
+            curr->next = lp->dummy;
+            free(temp);
+        }
+        loc = slotf;
+    }
+        
+    curr->data[loc] = NULL;
 
 }
 
 //return the item at position index in the list pointed to by lp ; the index must be within range
 void *getItem(LIST *lp, int index) {
 
-
+    
 
 }
