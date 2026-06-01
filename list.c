@@ -13,17 +13,21 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#define ARRAY_SIZE 8
+#define slotf 4
+
 
 //define structs
 typedef struct list {
-    int count;
-    struct node *head;
+    int tcunt; //total count
+    struct node *dummy;
     int (*compare)(); //do we need?
 } LIST;
 
 typedef struct node {
-    void *data;
-    void **elts; //array for each node
+    int lcunt; //local count
+    int cap; //capacity of array
+    void **data; //node array of data
     struct node *next;
     struct node *prev;
 } NODE;
@@ -40,14 +44,42 @@ typedef struct node {
 LIST *createList(int (*compare)) {
 
     LIST *lp = malloc(sizeof(LIST));
-    NODE *head = malloc(sizeof(NODE*)); 
-    NODE *tail = malloc(sizeof(NODE*));
+    NODE *dummy = malloc(sizeof(NODE)); 
     
-    lp->head = head;
+    lp->dummy = dummy;
     lp->compare = compare;
-    lp->count = 0;
+    lp->tcunt = 0;
 
     return lp;
+
+}
+
+/* private func making a new node with goal of adding 
+ * malloc
+ * if list has no nodes, make localcnt, totalcnt, assign
+ * respective prevs/nexts
+ * if list has nodes, malloc, assign prev/nexts
+ * */
+static NODE* mknode(LIST *lp, NODE* prev) {
+    
+    NODE* new = malloc(sizeof(NODE));
+    new->lcunt = 0;
+
+    if (prev == NULL) { //only NULL if tcunt = 0
+        new->data = malloc(sizeof(void*) * ARRAY_SIZE);
+        new->cap = ARRAY_SIZE;
+        new->prev = lp->dummy;
+        lp->dummy->next = new;
+        lp->dummy->prev = new;
+        lp->tcunt++;
+        return new;
+    }
+    else {
+        new->data = malloc(sizeof(prev->data) * 2);
+        new->cap = sizeof(prev->data) * 2;    
+        new->prev = prev;
+        prev->next = new;
+    }
 
 }
 
@@ -59,26 +91,58 @@ LIST *createList(int (*compare)) {
  *       list pointed to by lp */
 void destroyList(LIST *lp) {
 
-    
+   free(lp->dummy);
+   free(lp);
 
 }
 
 //return the number of items in the list pointed to by lp
 int numItems(LIST *lp) {
     assert (lp != NULL);
-    return lp->count;
+    return lp->tcunt;
 }
 
 //add item as the first item in the list pointed to by lp
 void addFirst(LIST *lp, void *item) {
 
+    assert (lp != NULL && item != NULL);
 
+    //so don't have to keep using pointers
+    NODE *curr;
+    int loc;
+
+    if (lp->tcunt == 0) { //no nodes    
+        curr = mknode(lp, NULL);
+        loc = slotf;
+    }
+    else if (curr->lcunt == 0)
+        loc = slotf;
+    else 
+        loc = (slotf - 1) % curr->cap; 
+    
+    curr->data[loc] = item;
+    
+    
 
 }
 
 //add item as the last item in the list pointed to by lp
 void addLast(LIST *lp, void *item) {
 
+    assert (lp != NULL && item != NULL);
+
+    //so don't have to keep using pointers
+    NODE *curr = lp->dummy->prev;
+    int loc;
+    
+    if (lp->tcunt == 0) { //no nodes    
+        NODE *first = mknode(lp, NULL);
+        first->data[slotf] = item;
+    }
+    else {
+        loc = (slotf + curr->lcunt) % curr->cap;
+        curr->data[loc] = item;
+    }
 
 
 }
