@@ -50,6 +50,8 @@ LIST *createList(int (*compare)) {
     NODE *dummy = malloc(sizeof(NODE)); 
     
     lp->dummy = dummy;
+    lp->dummy->prev = dummy;
+    lp->dummy->next = dummy;
     lp->compare = compare;
     lp->tcunt = 0;
 
@@ -126,7 +128,9 @@ void addFirst(LIST *lp, void *item) {
             loc = (slotf - 1) % curr->cap; 
     }
     
-    curr->data[loc] = item;   
+    curr->data[loc] = item; 
+    curr->lcunt++;
+    lp->tcunt++;
 
 }
 
@@ -151,7 +155,9 @@ void addLast(LIST *lp, void *item) {
             loc = (slotf + curr->lcunt) % curr->cap;
     }
         
-    curr->data[loc] = item;    
+    curr->data[loc] = item;
+    curr->lcunt++;
+    lp->tcunt++;
 
 }
 
@@ -164,15 +170,14 @@ void *removeFirst(LIST *lp) {
     //so don't have to keep using pointers
     NODE *curr;
     int loc;
+    void *value;
     
     if (lp->tcunt == 0) { //no nodes    
         return NULL;
     }
     else {
         curr = lp->dummy->next;
-        if (curr->lcunt == 0) { //if array in first node emptry, but
-                                //what if single node with no elements in array?
-                                //does that happen?
+        if (curr->lcunt == 0) { //if array is empty
             void *temp = curr;
             curr = curr->next;
             curr->prev = lp->dummy;
@@ -181,7 +186,12 @@ void *removeFirst(LIST *lp) {
         loc = slotf;
     }
         
+    value = curr->data[loc];
     curr->data[loc] = NULL;
+    curr->lcunt;
+    lp->tcunt;
+
+    return value;
 
 }
 
@@ -193,30 +203,39 @@ void *removeLast(LIST *lp) {
     //so don't have to keep using pointers
     NODE *curr;
     int loc;
+    void *value;
     
     if (lp->tcunt == 0) { //no nodes    
         return NULL;
     }
     else {
         curr = lp->dummy->prev;
-        if (curr->lcunt == 0) { //if array in last node emptry, but
-                                //what if single node with no elements in array?
-                                //does that happen?
+        if (curr->lcunt == 0) { //if array in last node empty, but
             void *temp = curr;
             curr = curr->prev;
             curr->next = lp->dummy;
             free(temp);
         }
-        loc = slotf;
+
+        loc = (slotf + curr->lcunt) % curr->cap;
     }
-        
+ 
+    value = curr->data[loc];
     curr->data[loc] = NULL;
+    curr->lcunt--;
+    lp->tcunt--;
+
+    return value;
 
 }
 
 //return the item at position index in the list pointed to by lp ; the index must be within range
 void *getItem(LIST *lp, int index) {
 
-    
+   if (lp->tcunt == 0) //no nodes
+       return NULL;
+   else {
+        
+   }
 
 }
