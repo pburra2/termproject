@@ -115,14 +115,15 @@ void addFirst(LIST *lp, void *item) {
         curr = mknode(lp, NULL);
         loc = slotf;
     }
-    else if (curr->lcunt == 0)
-        loc = slotf;
-    else 
-        loc = (slotf - 1) % curr->cap; 
+    else {
+        curr = lp->dummy->next;
+        if (curr->lcunt == 0)
+            loc = slotf;
+        else 
+            loc = (slotf - 1) % curr->cap; 
+    }
     
-    curr->data[loc] = item;
-    
-    
+    curr->data[loc] = item;   
 
 }
 
@@ -132,18 +133,22 @@ void addLast(LIST *lp, void *item) {
     assert (lp != NULL && item != NULL);
 
     //so don't have to keep using pointers
-    NODE *curr = lp->dummy->prev;
+    NODE *curr;
     int loc;
     
     if (lp->tcunt == 0) { //no nodes    
-        NODE *first = mknode(lp, NULL);
-        first->data[slotf] = item;
+        curr = mknode(lp, NULL);
+        loc = slotf;
     }
     else {
-        loc = (slotf + curr->lcunt) % curr->cap;
-        curr->data[loc] = item;
+        curr = lp->dummy->prev;
+        if (curr->lcunt == 0)
+            loc = slotf;
+        else
+            loc = (slotf + curr->lcunt) % curr->cap;
     }
-
+        
+    curr->data[loc] = item;    
 
 }
 
