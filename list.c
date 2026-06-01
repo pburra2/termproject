@@ -230,12 +230,27 @@ void *removeLast(LIST *lp) {
 }
 
 //return the item at position index in the list pointed to by lp ; the index must be within range
+//start at end bc most items
 void *getItem(LIST *lp, int index) {
 
-   if (lp->tcunt == 0) //no nodes
+   if (lp->tcunt == 0) {//no nodes
+       printf("No items in list");
        return NULL;
+   }
+   else if (index >= lp->tcunt || index < 0) {
+       printf("Index value is invalid");
+       return NULL;
+   }
    else {
-        
+       NODE *ncurr = lp->dummy->next;
+       int icurr = 0; 
+       while (index > (icurr + ncurr->lcunt)) {
+            icurr += ncurr->lcunt;
+            ncurr = ncurr->next;
+       }
+
+       return ncurr->data[slotf + (index - icurr)];
+       
    }
 
 }
