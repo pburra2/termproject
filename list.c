@@ -87,7 +87,6 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
     new->next = next;
     prev->next = new;
     next->prev = new;
-    lp->tcunt++;
 
     return new;
 
@@ -126,22 +125,19 @@ int numItems(LIST *lp) {
 //  <- should I half the size??
 void addFirst(LIST *lp, void *item) {
 
-
-    printf("beg added");
     assert (lp != NULL && item != NULL);
 
     //so don't have to keep using pointers
-    NODE *curr;
+    NODE *curr = lp->dummy->next;
 
     if (lp->tcunt == 0)  //no nodes    
         curr = mknode(lp, lp->dummy, lp->dummy);
-    else {
-        curr = lp->dummy->next;
-        if (curr->lcunt == curr->cap)
-            curr = mknode(lp, lp->dummy, curr);
-        if (curr->lcunt != 0)
-            curr->ibeg = (curr->ibeg + curr->cap - 1) % curr->cap; //add b so never negative
-    }
+      
+    if (curr->lcunt == curr->cap) //array full
+        curr = mknode(lp, lp->dummy, curr);
+    if (curr->lcunt != 0) //not empty array
+        curr->ibeg = (curr->ibeg + curr->cap - 1) % curr->cap; //add b so never negative
+    //otherwise ibeg stays ibeg
 
     curr->data[curr->ibeg] = item; 
     curr->lcunt++;
@@ -155,40 +151,35 @@ void addLast(LIST *lp, void *item) {
     assert (lp != NULL && item != NULL);
 
     //so don't have to keep using pointers
-    NODE *curr;
+    NODE *curr = lp->dummy->prev;
     int last;
 
     if (lp->tcunt == 0)  //no nodes    
         curr = mknode(lp, lp->dummy, lp->dummy); 
-    else {
-        curr = lp->dummy->prev;
-        if (curr->lcunt == curr->cap)
-            curr = mknode(lp, curr, lp->dummy);
-        last = (curr->ibeg + curr->lcunt) % curr->cap; 
-    }
-
+   
+    if (curr->lcunt == curr->cap) //array full
+        curr = mknode(lp, curr, lp->dummy);
+    
+    last = (curr->ibeg + curr->lcunt) % curr->cap; 
     curr->data[last] = item;
     curr->lcunt++;
     lp->tcunt++;
-
 }
 
 //remove and return the first item in the list pointed to by lp
 //the list must not be empty
 void *removeFirst(LIST *lp) {
-
+    
     assert (lp != NULL);
-
-    //so don't have to keep using pointers
-    NODE *curr;
-    void *value;
-
     if (lp->tcunt == 0) //no nodes    
         return NULL;
     
-    curr = lp->dummy->next;
+    //so don't have to keep using pointers
+    NODE *temp, *curr = lp->dummy->next;
+    void *value;
+
     if (curr->lcunt == 0) { //if array is empty
-        void *temp = curr;
+        temp = curr;
         curr = curr->next;
         curr->prev = lp->dummy;
         free(temp->data);
@@ -209,19 +200,18 @@ void *removeFirst(LIST *lp) {
 //remove and return the last item in the list pointed to by lp ; the list must not be empty
 void *removeLast(LIST *lp) {
 
+    printf("beg remove");
     assert (lp != NULL);
-
-    //so don't have to keep using pointers
-    NODE *curr;
-    int last;
-    void *value;
-
     if (lp->tcunt == 0) //no nodes    
         return NULL;
     
-    curr = lp->dummy->prev;
+    //so don't have to keep using pointers
+    NODE *temp, *curr = lp->dummy->prev;
+    int last;
+    void *value;
+
     if (curr->lcunt == 0) { 
-        void *temp = curr;
+        temp = curr;
         curr = curr->prev;            
         curr->next = lp->dummy;           
         free(temp->data);
