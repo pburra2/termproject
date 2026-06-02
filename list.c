@@ -9,7 +9,9 @@
  *
  *
  * when addingfirst/removefirst, do you have to update what the "first"
- * el array loc is?
+ * el array loc is? me: i think so
+ *
+ * why do my sizes double when there is no search for a certain value?
  */
 
 #include <stdio.h>
@@ -48,7 +50,7 @@ LIST *createList(int (*compare)()) {
 
     LIST *lp = malloc(sizeof(LIST));
     NODE *dummy = malloc(sizeof(NODE)); 
-    
+
     lp->dummy = dummy;
     lp->dummy->prev = dummy;
     lp->dummy->next = dummy;
@@ -66,7 +68,7 @@ LIST *createList(int (*compare)()) {
  * if list has nodes, malloc, assign prev/nexts
  * */
 static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
-    
+
     NODE* new = malloc(sizeof(NODE));
 
     if (prev->cap == NULL) {
@@ -77,7 +79,7 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
         new->data = malloc(sizeof(void*) * prev->cap * 2);
         new->cap = prev->cap * 2;
     }
-    
+
     new->lcunt = 0;
     new->ibeg = 4;
     new->prev = prev;
@@ -98,8 +100,8 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
  *       list pointed to by lp */
 void destroyList(LIST *lp) {
 
-   free(lp->dummy);
-   free(lp);
+    free(lp->dummy);
+    free(lp);
 
 }
 
@@ -128,7 +130,7 @@ void addFirst(LIST *lp, void *item) {
         if (curr->lcunt != 0)
             curr->ibeg = (curr->ibeg - 1) % curr->cap; 
     }
-    
+
     curr->data[curr->ibeg] = item; 
     curr->lcunt++;
     lp->tcunt++;
@@ -142,17 +144,17 @@ void addLast(LIST *lp, void *item) {
 
     //so don't have to keep using pointers
     NODE *curr;
-    
-    if (lp->tcunt == 0) { //no nodes    
+
+    if (lp->tcunt == 0)  //no nodes    
         curr = mknode(lp, lp->dummy, lp->dummy);
-    }
+    
     else {
         curr = lp->dummy->prev;
         if (curr->lcunt == curr->cap)
             curr = mknode(lp, curr, lp->dummy);
         curr->ibeg = (curr->ibeg + curr->lcunt) % curr->cap; 
     }
-         
+
     curr->data[curr->ibeg] = item;
     curr->lcunt++;
     lp->tcunt++;
@@ -167,25 +169,23 @@ void *removeFirst(LIST *lp) {
 
     //so don't have to keep using pointers
     NODE *curr;
-    int loc;
     void *value;
-    
-    if (lp->tcunt == 0) { //no nodes    
+
+    if (lp->tcunt == 0) //no nodes    
         return NULL;
+    
+    curr = lp->dummy->next;
+    if (curr->lcunt == 0) { //if array is empty
+        void *temp = curr;
+        curr = curr->next;
+        curr->prev = lp->dummy;
+        free(temp);
     }
-    else {
-        curr = lp->dummy->next;
-        if (curr->lcunt == 0) { //if array is empty
-            void *temp = curr;
-            curr = curr->next;
-            curr->prev = lp->dummy;
-            free(temp);
-        }
-        loc = slotf;
-    }
-        
-    value = curr->data[loc];
-    curr->data[loc] = NULL;
+    //if not empty, ibeg stays the same (first)
+
+    value = curr->data[curr->ibeg];
+    curr->data[curr->ibeg] = NULL;
+    curr->ibeg = (curr->ibeg + 1) % curr->cap;
     curr->lcunt--;
     lp->tcunt--;
 
@@ -200,26 +200,23 @@ void *removeLast(LIST *lp) {
 
     //so don't have to keep using pointers
     NODE *curr;
-    int loc;
+    int last;
     void *value;
-    
-    if (lp->tcunt == 0) { //no nodes    
-        return NULL;
-    }
-    else {
-        curr = lp->dummy->prev;
-        if (curr->lcunt == 0) { //if array in last node empty, but
-            void *temp = curr;
-            curr = curr->prev;
-            curr->next = lp->dummy;
-            free(temp);
-        }
 
-        loc = (slotf + curr->lcunt) % curr->cap;
+    if (lp->tcunt == 0) //no nodes    
+        return NULL;
+    
+    curr = lp->dummy->prev;
+    if (curr->lcunt == 0) { 
+        void *temp = curr;
+        curr = curr->prev;            
+        curr->next = lp->dummy;           
+        free(temp);   
     }
- 
-    value = curr->data[loc];
-    curr->data[loc] = NULL;
+    last = (curr->ibeg + curr->lcunt) % curr->cap;
+
+    value = curr->data[last];
+    curr->data[last] = NULL;
     curr->lcunt--;
     lp->tcunt--;
 
@@ -231,25 +228,24 @@ void *removeLast(LIST *lp) {
 //the index must be within range
 void *getItem(LIST *lp, int index) {
 
-   if (lp->tcunt == 0) {//no nodes
-       printf("No items in list");
-       return NULL;
-   }
-   else if (index >= lp->tcunt || index < 0) {
-       printf("Index value is invalid");
-       return NULL;
-   }
-   else {
-       NODE *ncurr = lp->dummy->next;
-       int icurr = 0; 
-       while (index > (icurr + ncurr->lcunt)) {
+    if (lp->tcunt == 0) {//no nodes
+        printf("No items in list");
+        return NULL;
+    }
+    else if (index >= lp->tcunt || index < 0) {
+        printf("Index value is invalid");
+        return NULL;
+    }
+    else {
+        NODE *ncurr = lp->dummy->next;
+        int icurr = 0; 
+        while (index > (icurr + ncurr->lcunt)) {
             icurr += ncurr->lcunt;
             ncurr = ncurr->next;
-       }
+        }
 
-       return ncurr->data[slotf + (index - icurr)];
-       
-   }
+        return ncurr->data[ncurr->ibeg + (index - icurr)];
+    }
 
 }
 
@@ -257,20 +253,20 @@ void *getItem(LIST *lp, int index) {
 //the index must be within range
 void setItem(LIST *lp, int index, void *item) {
 
-   if (lp->tcunt == 0) //no nodes
-       printf("No items in list");
-   else if (index >= lp->tcunt || index < 0) 
-       printf("Index value is invalid");
-   else {
-       NODE *ncurr = lp->dummy->next;
-       int icurr = 0; 
-       while (index > (icurr + ncurr->lcunt)) {
+    if (lp->tcunt == 0) //no nodes
+        printf("No items in list");
+    else if (index >= lp->tcunt || index < 0) 
+        printf("Index value is invalid");
+    else {
+        NODE *ncurr = lp->dummy->next;
+        int icurr = 0; 
+        while (index > (icurr + ncurr->lcunt)) {
             icurr += ncurr->lcunt;
             ncurr = ncurr->next;
-       }
+        }
 
-       ncurr->data[slotf + (index - icurr)] = item;
-       
-   }
+        ncurr->data[ncurr->ibeg + (index - icurr)] = item;
+
+    }
 
 }
