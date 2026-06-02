@@ -54,6 +54,7 @@ LIST *createList(int (*compare)()) {
     lp->dummy = dummy;
     lp->dummy->prev = dummy;
     lp->dummy->next = dummy;
+    lp->dummy->cap = 0;
     lp->compare = compare;
     lp->tcunt = 0;
 
@@ -71,7 +72,7 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
 
     NODE* new = malloc(sizeof(NODE));
 
-    if (prev->cap == NULL) {
+    if (prev->cap == 0) {
         new->data = malloc(sizeof(void*) * ARRAY_SIZE);
         new->cap = ARRAY_SIZE;
     }
@@ -99,10 +100,19 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
  * GOAL: deallocate memory associated with the 
  *       list pointed to by lp */
 void destroyList(LIST *lp) {
-
+    NODE *temp;
+    //free nodes
+    while(lp->dummy->next != lp->dummy) {
+        temp = lp->dummy->next;
+        lp->dummy->next = temp->next;
+        free(temp->data);
+        free(temp);
+    }
+    
+    //free list
     free(lp->dummy);
     free(lp);
-
+    printf("list destroyed");
 }
 
 //return the number of items in the list pointed to by lp
@@ -116,6 +126,8 @@ int numItems(LIST *lp) {
 //  <- should I half the size??
 void addFirst(LIST *lp, void *item) {
 
+
+    printf("beg added");
     assert (lp != NULL && item != NULL);
 
     //so don't have to keep using pointers
@@ -128,7 +140,7 @@ void addFirst(LIST *lp, void *item) {
         if (curr->lcunt == curr->cap)
             curr = mknode(lp, lp->dummy, curr);
         if (curr->lcunt != 0)
-            curr->ibeg = (curr->ibeg - 1) % curr->cap; 
+            curr->ibeg = (curr->ibeg + curr->cap - 1) % curr->cap; //add b so never negative
     }
 
     curr->data[curr->ibeg] = item; 
@@ -144,18 +156,18 @@ void addLast(LIST *lp, void *item) {
 
     //so don't have to keep using pointers
     NODE *curr;
+    int last;
 
     if (lp->tcunt == 0)  //no nodes    
-        curr = mknode(lp, lp->dummy, lp->dummy);
-    
+        curr = mknode(lp, lp->dummy, lp->dummy); 
     else {
         curr = lp->dummy->prev;
         if (curr->lcunt == curr->cap)
             curr = mknode(lp, curr, lp->dummy);
-        curr->ibeg = (curr->ibeg + curr->lcunt) % curr->cap; 
+        last = (curr->ibeg + curr->lcunt) % curr->cap; 
     }
 
-    curr->data[curr->ibeg] = item;
+    curr->data[last] = item;
     curr->lcunt++;
     lp->tcunt++;
 
@@ -179,6 +191,7 @@ void *removeFirst(LIST *lp) {
         void *temp = curr;
         curr = curr->next;
         curr->prev = lp->dummy;
+        free(temp->data);
         free(temp);
     }
     //if not empty, ibeg stays the same (first)
@@ -211,7 +224,8 @@ void *removeLast(LIST *lp) {
         void *temp = curr;
         curr = curr->prev;            
         curr->next = lp->dummy;           
-        free(temp);   
+        free(temp->data);
+        free(temp);
     }
     last = (curr->ibeg + curr->lcunt) % curr->cap;
 
