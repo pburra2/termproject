@@ -17,7 +17,6 @@
 #include <assert.h>
 
 #define ARRAY_SIZE 8
-#define slotf 4
 
 
 //define structs
@@ -30,6 +29,7 @@ typedef struct list {
 typedef struct node {
     int lcunt; //local count
     int cap; //capacity of array
+    int ibeg; //beginning index
     void **data; //node array of data
     struct node *next;
     struct node *prev;
@@ -68,22 +68,23 @@ LIST *createList(int (*compare)()) {
 static NODE* mknode(LIST *lp, NODE* prev) {
     
     NODE* new = malloc(sizeof(NODE));
-    new->lcunt = 0;
 
-    if (prev == NULL) { //only NULL if tcunt = 0
+    if (prev->cap == NULL) {
         new->data = malloc(sizeof(void*) * ARRAY_SIZE);
         new->cap = ARRAY_SIZE;
-        new->prev = lp->dummy;
-        lp->dummy->next = new;
-        lp->dummy->prev = new;
-        lp->tcunt++;
     }
     else {
-        new->data = malloc(sizeof(prev->data) * 2);
-        new->cap = sizeof(prev->data) * 2;    
-        new->prev = prev;
-        prev->next = new;
+        new->data = malloc(sizeof(void*) * prev->cap * 2);
+        new->cap = prev->cap * 2;
     }
+    
+    new->lcunt = 0;
+    new->ibeg = 4;
+    new->prev = prev;
+    new->next = lp->dummy;
+    prev->next = new;
+    prev->prev = new;
+    lp->tcunt++;
 
     return new;
 
@@ -115,21 +116,16 @@ void addFirst(LIST *lp, void *item) {
 
     //so don't have to keep using pointers
     NODE *curr;
-    int loc;
 
-    if (lp->tcunt == 0) { //no nodes    
-        curr = mknode(lp, NULL);
-        loc = slotf;
-    }
+    if (lp->tcunt == 0)  //no nodes    
+        curr = mknode(lp, lp->dummy);
     else {
         curr = lp->dummy->next;
-        if (curr->lcunt == 0)
-            loc = slotf;
-        else 
-            loc = (slotf - 1) % curr->cap; 
+        if (curr->lcunt != 0)
+            curr->ibeg = (curr->ibeg - 1) % curr->cap; 
     }
     
-    curr->data[loc] = item; 
+    curr->data[curr->ibeg] = item; 
     curr->lcunt++;
     lp->tcunt++;
 
@@ -142,21 +138,14 @@ void addLast(LIST *lp, void *item) {
 
     //so don't have to keep using pointers
     NODE *curr;
-    int loc;
     
     if (lp->tcunt == 0) { //no nodes    
-        curr = mknode(lp, NULL);
-        loc = slotf;
+        curr = mknode(lp, lp->dummy);
     }
-    else {
+    else 
         curr = lp->dummy->prev;
-        if (curr->lcunt == 0)
-            loc = slotf;
-        else
-            loc = (slotf + curr->lcunt) % curr->cap;
-    }
-        
-    curr->data[loc] = item;
+               
+    curr->data[curr->ibeg + curr->lcunt % curr->cap] = item;
     curr->lcunt++;
     lp->tcunt++;
 
