@@ -65,7 +65,7 @@ LIST *createList(int (*compare)()) {
  * respective prevs/nexts
  * if list has nodes, malloc, assign prev/nexts
  * */
-static NODE* mknode(LIST *lp, NODE* prev) {
+static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
     
     NODE* new = malloc(sizeof(NODE));
 
@@ -81,9 +81,9 @@ static NODE* mknode(LIST *lp, NODE* prev) {
     new->lcunt = 0;
     new->ibeg = 4;
     new->prev = prev;
-    new->next = lp->dummy;
+    new->next = next;
     prev->next = new;
-    prev->prev = new;
+    next->prev = new;
     lp->tcunt++;
 
     return new;
@@ -110,6 +110,8 @@ int numItems(LIST *lp) {
 }
 
 //add item as the first item in the list pointed to by lp
+//if first node's array full, allocate new first node
+//  <- should I half the size??
 void addFirst(LIST *lp, void *item) {
 
     assert (lp != NULL && item != NULL);
@@ -118,9 +120,11 @@ void addFirst(LIST *lp, void *item) {
     NODE *curr;
 
     if (lp->tcunt == 0)  //no nodes    
-        curr = mknode(lp, lp->dummy);
+        curr = mknode(lp, lp->dummy, lp->dummy);
     else {
         curr = lp->dummy->next;
+        if (curr->lcunt == curr->cap)
+            curr = mknode(lp, lp->dummy, curr);
         if (curr->lcunt != 0)
             curr->ibeg = (curr->ibeg - 1) % curr->cap; 
     }
@@ -140,12 +144,16 @@ void addLast(LIST *lp, void *item) {
     NODE *curr;
     
     if (lp->tcunt == 0) { //no nodes    
-        curr = mknode(lp, lp->dummy);
+        curr = mknode(lp, lp->dummy, lp->dummy);
     }
-    else 
+    else {
         curr = lp->dummy->prev;
-               
-    curr->data[curr->ibeg + curr->lcunt % curr->cap] = item;
+        if (curr->lcunt == curr->cap)
+            curr = mknode(lp, curr, lp->dummy);
+        curr->ibeg = (curr->ibeg + curr->lcunt) % curr->cap; 
+    }
+         
+    curr->data[curr->ibeg] = item;
     curr->lcunt++;
     lp->tcunt++;
 
