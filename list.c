@@ -25,7 +25,6 @@
 typedef struct list {
     int tcunt; //total count
     struct node *dummy;
-    int (*compare)(); //do we need?
 } LIST;
 
 typedef struct node {
@@ -48,6 +47,7 @@ typedef struct node {
  * GOAL: return a pointer to a new list */
 LIST *createList(int (*compare)()) {
 
+    printf("before createlist\n");
     LIST *lp = malloc(sizeof(LIST));
     NODE *dummy = malloc(sizeof(NODE)); 
 
@@ -55,10 +55,11 @@ LIST *createList(int (*compare)()) {
     lp->dummy->prev = dummy;
     lp->dummy->next = dummy;
     lp->dummy->cap = 0;
-    lp->compare = compare;
     lp->tcunt = 0;
 
+    printf("list created\n");
     return lp;
+
 
 }
 
@@ -111,7 +112,7 @@ void destroyList(LIST *lp) {
     //free list
     free(lp->dummy);
     free(lp);
-    printf("list destroyed");
+    printf("list destroyed\n");
 }
 
 //return the number of items in the list pointed to by lp
@@ -123,16 +124,19 @@ int numItems(LIST *lp) {
 //add item as the first item in the list pointed to by lp
 //if first node's array full, allocate new first node
 //  <- should I half the size??
+//  ans: TA said that'll never happen
 void addFirst(LIST *lp, void *item) {
 
     assert (lp != NULL && item != NULL);
 
     //so don't have to keep using pointers
-    NODE *curr = lp->dummy->next;
+    NODE *curr;
 
     if (lp->tcunt == 0)  //no nodes    
         curr = mknode(lp, lp->dummy, lp->dummy);
-      
+    else 
+        curr = lp->dummy->next;
+    
     if (curr->lcunt == curr->cap) //array full
         curr = mknode(lp, lp->dummy, curr);
     if (curr->lcunt != 0) //not empty array
@@ -148,22 +152,27 @@ void addFirst(LIST *lp, void *item) {
 //add item as the last item in the list pointed to by lp
 void addLast(LIST *lp, void *item) {
 
+    printf("beg add, count = %d\n", lp->dummy->prev->lcunt);
     assert (lp != NULL && item != NULL);
 
     //so don't have to keep using pointers
-    NODE *curr = lp->dummy->prev;
+    NODE *curr;
     int last;
 
     if (lp->tcunt == 0)  //no nodes    
         curr = mknode(lp, lp->dummy, lp->dummy); 
-   
+    else
+        curr = lp->dummy->prev;
+    
     if (curr->lcunt == curr->cap) //array full
         curr = mknode(lp, curr, lp->dummy);
     
-    last = (curr->ibeg + curr->lcunt) % curr->cap; 
+    last = (curr->ibeg + curr->lcunt - 1) % curr->cap; 
     curr->data[last] = item;
     curr->lcunt++;
     lp->tcunt++;
+
+    printf("end add");
 }
 
 //remove and return the first item in the list pointed to by lp
@@ -182,6 +191,7 @@ void *removeFirst(LIST *lp) {
         temp = curr;
         curr = curr->next;
         curr->prev = lp->dummy;
+        lp->dummy->next = curr;
         free(temp->data);
         free(temp);
     }
@@ -189,7 +199,7 @@ void *removeFirst(LIST *lp) {
 
     value = curr->data[curr->ibeg];
     curr->data[curr->ibeg] = NULL;
-    curr->ibeg = (curr->ibeg + 1) % curr->cap;
+    curr->ibeg = (curr->ibeg + curr->cap + 1) % curr->cap;
     curr->lcunt--;
     lp->tcunt--;
 
@@ -200,7 +210,7 @@ void *removeFirst(LIST *lp) {
 //remove and return the last item in the list pointed to by lp ; the list must not be empty
 void *removeLast(LIST *lp) {
 
-    printf("beg remove");
+    printf("beg remove, count = %d\n", lp->dummy->prev->lcunt);
     assert (lp != NULL);
     if (lp->tcunt == 0) //no nodes    
         return NULL;
@@ -213,11 +223,12 @@ void *removeLast(LIST *lp) {
     if (curr->lcunt == 0) { 
         temp = curr;
         curr = curr->prev;            
-        curr->next = lp->dummy;           
+        curr->next = lp->dummy; 
+        lp->dummy->prev = curr;
         free(temp->data);
         free(temp);
     }
-    last = (curr->ibeg + curr->lcunt) % curr->cap;
+    last = (curr->ibeg + curr->lcunt - 1) % curr->cap;
 
     value = curr->data[last];
     curr->data[last] = NULL;
@@ -243,7 +254,7 @@ void *getItem(LIST *lp, int index) {
     else {
         NODE *ncurr = lp->dummy->next;
         int icurr = 0; 
-        while (index > (icurr + ncurr->lcunt)) {
+        while (index >= (icurr + ncurr->lcunt - 1)) {
             icurr += ncurr->lcunt;
             ncurr = ncurr->next;
         }
@@ -264,12 +275,12 @@ void setItem(LIST *lp, int index, void *item) {
     else {
         NODE *ncurr = lp->dummy->next;
         int icurr = 0; 
-        while (index > (icurr + ncurr->lcunt)) {
+        while (index >= (icurr + ncurr->lcunt - 1)) {
             icurr += ncurr->lcunt;
             ncurr = ncurr->next;
         }
 
-        ncurr->data[ncurr->ibeg + (index - icurr)] = item;
+        ncurr->data[ncurr->ibeg + (index - icurr) % ncurr->cap] = item;
 
     }
 
