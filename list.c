@@ -25,6 +25,7 @@
 typedef struct list {
     int tcunt; //total count
     struct node *dummy;
+    int (*compare)();
 } LIST;
 
 typedef struct node {
@@ -47,10 +48,12 @@ typedef struct node {
  * GOAL: return a pointer to a new list */
 LIST *createList(int (*compare)()) {
 
+
     LIST *lp = malloc(sizeof(LIST));
     NODE *dummy = malloc(sizeof(NODE)); 
 
     lp->dummy = dummy;
+    lp->compare = compare;
     lp->dummy->prev = dummy;
     lp->dummy->next = dummy;
     lp->dummy->cap = 0;
@@ -109,7 +112,6 @@ void destroyList(LIST *lp) {
     //free list
     free(lp->dummy);
     free(lp);
-    printf("list destroyed");
 }
 
 //return the number of items in the list pointed to by lp
@@ -121,20 +123,23 @@ int numItems(LIST *lp) {
 //add item as the first item in the list pointed to by lp
 //if first node's array full, allocate new first node
 //  <- should I half the size??
+//  ans: TA said that'll never happen
 void addFirst(LIST *lp, void *item) {
 
     assert (lp != NULL && item != NULL);
 
     //so don't have to keep using pointers
-    NODE *curr = lp->dummy->next;
+    NODE *curr;
 
     if (lp->tcunt == 0)  //no nodes    
         curr = mknode(lp, lp->dummy, lp->dummy);
+    else
+        curr = lp->dummy->next;
 
     if (curr->lcunt == curr->cap) //array full
         curr = mknode(lp, lp->dummy, curr);
-    if (curr->lcunt != 0) //not empty array
-        curr->ibeg = (curr->ibeg + curr->cap - 1) % curr->cap; //add b so never negative
+    if (curr->lcunt != 0) //not empty array nor full
+        curr->ibeg = (curr->ibeg - 1 + curr->cap) % curr->cap; //add cap so never negative
     //otherwise ibeg stays ibeg
 
     curr->data[curr->ibeg] = item; 
@@ -154,11 +159,13 @@ void addLast(LIST *lp, void *item) {
 
     if (lp->tcunt == 0)  //no nodes    
         curr = mknode(lp, lp->dummy, lp->dummy); 
+    else
+        curr = lp->dummy->prev;
 
     if (curr->lcunt == curr->cap) //array full
         curr = mknode(lp, curr, lp->dummy);
     
-    last = (curr->ibeg + curr->lcunt) % curr->cap; 
+    last = (curr->ibeg + curr->lcunt) % curr->cap; //last needs to be filled
     curr->data[last] = item;
     curr->lcunt++;
     lp->tcunt++;
@@ -182,6 +189,7 @@ void *removeFirst(LIST *lp) {
         temp = curr;
         curr = curr->next;
         curr->prev = lp->dummy;
+        lp->dummy->next = curr;
         free(temp->data);
         free(temp);
     }
@@ -200,7 +208,6 @@ void *removeFirst(LIST *lp) {
 //remove and return the last item in the list pointed to by lp ; the list must not be empty
 void *removeLast(LIST *lp) {
 
-    printf("beg remove");
     assert (lp != NULL);
 
     if (lp->tcunt == 0) //no nodes    
@@ -214,11 +221,12 @@ void *removeLast(LIST *lp) {
     if (curr->lcunt == 0) { 
         temp = curr;
         curr = curr->prev;            
-        curr->next = lp->dummy;           
+        curr->next = lp->dummy;
+        lp->dummy->prev = curr;
         free(temp->data);
         free(temp);
     }
-    last = (curr->ibeg + curr->lcunt) % curr->cap;
+    last = (curr->ibeg + curr->lcunt - 1) % curr->cap;
 
     value = curr->data[last];
     curr->data[last] = NULL;
@@ -233,23 +241,23 @@ void *removeLast(LIST *lp) {
 //the index must be within range
 void *getItem(LIST *lp, int index) {
 
-    if (lp->tcunt == 0) {//no nodes
-        printf("No items in list");
+    
+    if (lp->tcunt == 0) { //no nodes
+        printf("No items in list\n");
         return NULL;
     }
     else if (index >= lp->tcunt || index < 0) {
-        printf("Index value is invalid");
+        printf("Index value is invalid\n");
         return NULL;
     }
     else {
         NODE *ncurr = lp->dummy->next;
-        int icurr = 0; 
-        while (index > (icurr + ncurr->lcunt)) {
-            icurr += ncurr->lcunt;
+        while (index - ncurr->cap >= 0 && ncurr->cap != 0) {
+            index -= ncurr->cap;
             ncurr = ncurr->next;
         }
 
-        return ncurr->data[ncurr->ibeg + (index - icurr)];
+        return ncurr->data[(ncurr->ibeg + index) % ncurr->cap];
     }
 
 }
@@ -259,18 +267,17 @@ void *getItem(LIST *lp, int index) {
 void setItem(LIST *lp, int index, void *item) {
 
     if (lp->tcunt == 0) //no nodes
-        printf("No items in list");
+        printf("No items in list\n");
     else if (index >= lp->tcunt || index < 0) 
-        printf("Index value is invalid");
+        printf("Index value is invalid\n");
     else {
         NODE *ncurr = lp->dummy->next;
-        int icurr = 0; 
-        while (index > (icurr + ncurr->lcunt)) {
-            icurr += ncurr->lcunt;
+        while (index - ncurr->cap >= 0 && ncurr->cap != 0) {
+            index -= ncurr->cap;
             ncurr = ncurr->next;
         }
 
-        ncurr->data[ncurr->ibeg + (index - icurr)] = item;
+        ncurr->data[(ncurr->ibeg + index) % ncurr->cap] = item;
 
     }
 
