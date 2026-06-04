@@ -5,13 +5,17 @@
  *
  * File: list.c
  *
- * Description:
+ * Description:	This file contains the public functions and 
+ *		        structures for a list abstract data type for generic
+ *	        	pointer types.  The list supports deque operations, in
+ *	        	which items can be easily added to or removed from the
+ *	        	front or rear of the list. The operations include 
+ *	        	creating, adding to, removing from, finding, getting, 
+ *	         	switching out an item, counting, and destroying a list.
  *
- *
- * when addingfirst/removefirst, do you have to update what the "first"
- * el array loc is? me: i think so
- *
- * why do my sizes double when there is no search for a certain value?
+ *	        	The list is a circular, doubly-linked list. Each node an
+ *	        	array where the data is held, with each array doubling 
+ *	        	capacity as the nodes get added. 
  */
 
 #include <stdio.h>
@@ -21,24 +25,29 @@
 #define ARRAY_SIZE 8
 
 
-//define structs
+/* Struct definitions:
+ * LIST: total count, dummy node, compare pointer function
+ * NODE: local count, capacity, beginning index of array, data 
+ *       array, next */
 typedef struct list {
-    int tcunt; //total count
+    int tcunt; 
     struct node *dummy;
     int (*compare)();
 } LIST;
 
 typedef struct node {
-    int lcunt; //local count
-    int cap; //capacity of array
-    int ibeg; //beginning index
-    void **data; //node array of data
+    int lcunt; 
+    int cap;
+    int ibeg;
+    void **data;
     struct node *next;
     struct node *prev;
 } NODE;
 
 
-/* Brainstorm:
+/* ---- PROJECT FUNCTIONS ---- */
+
+/* 
  * - should have malloced list + head node
  * - node should have array??
  * - array has void *'s 
@@ -46,6 +55,15 @@ typedef struct node {
  * - head IS dummy node..?
  *
  * GOAL: return a pointer to a new list */
+
+/* Takes: user compare function
+ * Ouputs: list ptr
+ *
+ * Allocates memory for list, creates list. Allocates memory for 
+ * dummy, creates it & assigns next and prev to itself to make a 
+ * circular list. Assigns dummy capacity to 0, total count to 0.
+ *
+ * Big O(1) <-- no loops */
 LIST *createList(int (*compare)()) {
 
 
@@ -63,12 +81,15 @@ LIST *createList(int (*compare)()) {
 
 }
 
-/* private func making a new node with goal of adding 
- * malloc
- * if list has no nodes, make localcnt, totalcnt, assign
- * respective prevs/nexts
- * if list has nodes, malloc, assign prev/nexts
- * */
+/* Takes: list pointer, prev pointer, next pointer
+ * Returns: new node pointer
+ *
+ * Allocates memory for and creates a newnode, doubling array size 
+ * unless it is the first node. Connects it to the linked list, 
+ * assigns its beginning index to a default of 4, and local count 
+ * to 0. This function is called in the add functions.
+ *
+ * Big O(1) <- no loops */
 static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
 
     NODE* new = malloc(sizeof(NODE));
@@ -93,15 +114,14 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
 
 }
 
-/* Brainstorm:
- * - at end, free all arrays + full list
- *
- *
- * GOAL: deallocate memory associated with the 
- *       list pointed to by lp */
+/* Takes: list ptr
+ * Ouputs: nothing
+ * 
+ * Destroys full list, freeing all memory previously allocated.
+ * 
+ * Big O(n) n is elements in list <- 1 while loop */
 void destroyList(LIST *lp) {
     NODE *temp;
-    //free nodes
     while(lp->dummy->next != lp->dummy) {
         temp = lp->dummy->next;
         lp->dummy->next = temp->next;
@@ -109,38 +129,47 @@ void destroyList(LIST *lp) {
         free(temp);
     }
 
-    //free list
     free(lp->dummy);
     free(lp);
 }
 
-//return the number of items in the list pointed to by lp
+/* Takes: list ptr
+ * Ouputs: # elements in list 
+ * 
+ * Gets number of items in list from total count;
+ * 
+ * Big O(1) <-- no traversing */
 int numItems(LIST *lp) {
     assert (lp != NULL);
     return lp->tcunt;
 }
 
-//add item as the first item in the list pointed to by lp
-//if first node's array full, allocate new first node
-//  <- should I half the size??
-//  ans: TA said that'll never happen
+/* Takes: list ptr, item ptr
+ * Ouputs: nothing
+ *
+ * Adds element to beginning of list. Changes surrounding 
+ * element ptrs as needed. Calls mknode if there no list nodes
+ * present or if first node array is full.
+ *
+ * Note: I was told I don't need to half the size of a new first
+ *       node.
+ * 
+ * Big O(1) <-- no loops */
 void addFirst(LIST *lp, void *item) {
 
     assert (lp != NULL && item != NULL);
 
-    //so don't have to keep using pointers
     NODE *curr;
 
-    if (lp->tcunt == 0)  //no nodes    
+    if (lp->tcunt == 0)     
         curr = mknode(lp, lp->dummy, lp->dummy);
     else
         curr = lp->dummy->next;
 
-    if (curr->lcunt == curr->cap) //array full
+    if (curr->lcunt == curr->cap)
         curr = mknode(lp, lp->dummy, curr);
-    if (curr->lcunt != 0) //not empty array nor full
-        curr->ibeg = (curr->ibeg - 1 + curr->cap) % curr->cap; //add cap so never negative
-    //otherwise ibeg stays ibeg
+    if (curr->lcunt != 0) 
+        curr->ibeg = (curr->ibeg - 1 + curr->cap) % curr->cap;
 
     curr->data[curr->ibeg] = item; 
     curr->lcunt++;
@@ -148,7 +177,18 @@ void addFirst(LIST *lp, void *item) {
 
 }
 
-//add item as the last item in the list pointed to by lp
+
+/* Takes: list ptr, item ptr
+ * Ouputs: nothing
+ *
+ * Adds element to end of list.
+ * Changes surrounding element ptrs as needed.
+ *
+ * Adds element to end of list. Changes the surrounding 
+ * element ptrs as needed. Calls mknode if there no list nodes
+ * present or if last node array is full.
+ *
+ * Big O(1) <-- no loops */
 void addLast(LIST *lp, void *item) {
 
     assert (lp != NULL && item != NULL);
@@ -157,35 +197,39 @@ void addLast(LIST *lp, void *item) {
     NODE *curr = lp->dummy->prev;
     int last;
 
-    if (lp->tcunt == 0)  //no nodes    
+    if (lp->tcunt == 0)    
         curr = mknode(lp, lp->dummy, lp->dummy); 
     else
         curr = lp->dummy->prev;
 
-    if (curr->lcunt == curr->cap) //array full
+    if (curr->lcunt == curr->cap) 
         curr = mknode(lp, curr, lp->dummy);
     
-    last = (curr->ibeg + curr->lcunt) % curr->cap; //last needs to be filled
+    last = (curr->ibeg + curr->lcunt) % curr->cap; 
     curr->data[last] = item;
     curr->lcunt++;
     lp->tcunt++;
 
 }
 
-//remove and return the first item in the list pointed to by lp
-//the list must not be empty
+/* Takes: list ptr
+ * Ouputs: item data, NULL if no items
+ *
+ * Removes first item of list. Changes surrounding element ptrs 
+ * as needed.
+ *
+ * Big O(1) <-- no loops */
 void *removeFirst(LIST *lp) {
 
     
     assert (lp != NULL);
-    if (lp->tcunt == 0) //no nodes    
+    if (lp->tcunt == 0)   
         return NULL;
 
-    //so don't have to keep using pointers
     NODE *temp, *curr = lp->dummy->next;
     void *value;
 
-    if (curr->lcunt == 0) { //if array is empty
+    if (curr->lcunt == 0) { 
         temp = curr;
         curr = curr->next;
         curr->prev = lp->dummy;
@@ -193,7 +237,6 @@ void *removeFirst(LIST *lp) {
         free(temp->data);
         free(temp);
     }
-    //if not empty, ibeg stays the same (first)
 
     value = curr->data[curr->ibeg];
     curr->data[curr->ibeg] = NULL;
@@ -205,7 +248,13 @@ void *removeFirst(LIST *lp) {
 
 }
 
-//remove and return the last item in the list pointed to by lp ; the list must not be empty
+/* Takes: list ptr
+ * Ouputs: item data, NULL if no items
+ *
+ * Removes last item of list. Changes surrounding element ptrs as
+ * needed.
+ *
+ * Big O(1) <-- no loops */
 void *removeLast(LIST *lp) {
 
     assert (lp != NULL);
@@ -213,7 +262,6 @@ void *removeLast(LIST *lp) {
     if (lp->tcunt == 0) //no nodes    
         return NULL;
     
-    //so don't have to keep using pointers
     NODE *temp, *curr = lp->dummy->prev;
     int last;
     void *value;
@@ -237,8 +285,13 @@ void *removeLast(LIST *lp) {
 
 }
 
-//return the item at position index in the list pointed to by lp
-//the index must be within range
+/* Takes: list ptr, item ptr
+ * Ouputs: item data, NULL if invalid index/no items in list
+ *
+ * Gets data of element of list at given index.
+ * 
+ * Big O(m) m is # of nodes in list <- traversing list nodes
+ *                                     until index is found */
 void *getItem(LIST *lp, int index) {
 
     
@@ -262,8 +315,15 @@ void *getItem(LIST *lp, int index) {
 
 }
 
-//change the item at position index in the list pointed to by lp
-//the index must be within range
+
+/* Takes: list ptr, item ptr
+ * Ouputs: nothing
+ *
+ * Switches out data of element of list at given index with 
+ * given value
+ * 
+ * Big O(m) m is # of nodes in list <- traversing list nodes
+ *                                     until index is found */
 void setItem(LIST *lp, int index, void *item) {
 
     if (lp->tcunt == 0) //no nodes
