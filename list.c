@@ -15,14 +15,16 @@
  *
  *	        	The list is a circular, doubly-linked list. Each node an
  *	        	array where the data is held, with each array doubling 
- *	        	capacity as the nodes get added. 
+ *	        	capacity as each node gets added. 
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
-#define ARRAY_SIZE 8
+#define MIN_SIZE 8
+
+int maxsize = MIN_SIZE;
 
 
 /* Struct definitions:
@@ -85,7 +87,7 @@ LIST *createList(int (*compare)()) {
  * Returns: new node pointer
  *
  * Allocates memory for and creates a newnode, doubling array size 
- * unless it is the first node. Connects it to the linked list, 
+ * using the global max array size. Connects it to the linked list, 
  * assigns its beginning index to a default of 4, and local count 
  * to 0. This function is called in the add functions.
  *
@@ -94,15 +96,10 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
 
     NODE* new = malloc(sizeof(NODE));
 
-    if (prev->cap == 0) {
-        new->data = malloc(sizeof(void*) * ARRAY_SIZE);
-        new->cap = ARRAY_SIZE;
-    }
-    else {
-        new->data = malloc(sizeof(void*) * prev->cap * 2);
-        new->cap = prev->cap * 2;
-    }
-
+    new->data = malloc(sizeof(void*) * 2 * maxsize);
+    new->cap = maxsize * 2;
+    maxsize *= 2;
+    
     new->lcunt = 0;
     new->ibeg = 4;
     new->prev = prev;
