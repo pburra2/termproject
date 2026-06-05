@@ -287,8 +287,9 @@ void *removeLast(LIST *lp) {
  *
  * Gets data of element of list at given index.
  * 
- * Big O(m) m is # of nodes in list <- traversing list nodes
- *                                     until index is found */
+ * Big O(log n) n is # of nodes in list 
+ * <- traversing through nodes that have double the items as 
+ *    the previous node */
 void *getItem(LIST *lp, int index) {
 
     
@@ -319,8 +320,9 @@ void *getItem(LIST *lp, int index) {
  * Switches out data of element of list at given index with 
  * given value
  * 
- * Big O(m) m is # of nodes in list <- traversing list nodes
- *                                     until index is found */
+ * Big O(log n) n is # of nodes in list 
+ * <- traversing through nodes that have double the items as 
+ *    the previous node */
 void setItem(LIST *lp, int index, void *item) {
 
     if (lp->tcunt == 0) //no nodes
