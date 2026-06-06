@@ -116,7 +116,7 @@ static NODE* mknode(LIST *lp, NODE* prev, NODE* next) {
  * 
  * Destroys full list, freeing all memory previously allocated.
  * 
- * Big O(n) n is elements in list <- 1 while loop */
+ * Big O(n) n is nodes in list <- 1 while loop */
 void destroyList(LIST *lp) {
     NODE *temp;
     while(lp->dummy->next != lp->dummy) {
